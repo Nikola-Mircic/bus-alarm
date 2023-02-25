@@ -1,10 +1,20 @@
 package com.example.bus_alarm;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.FragmentActivity;
 
+import android.app.Activity;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -14,10 +24,20 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.bus_alarm.databinding.ActivityMapsBinding;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
+
+    private SearchView searchView;
+
+    private List<Address> addresses;
+    private Address selected = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +85,83 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        // Add a marker in Sydney and move the camera
-        /*LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
+        final Activity activity = this;
+
+        searchView = findViewById(R.id.addr_search);
+        LinearLayout options = findViewById(R.id.addr_options);
+
+        options.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                options.removeAllViews();
+            }
+        });
+
+        searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                Geocoder coder = new Geocoder(activity, Locale.getDefault());
+
+                try {
+                    options.removeAllViews();
+                    addresses = coder.getFromLocationName(s, 7);
+
+                    ArrayList<String> results = new ArrayList<>();
+                    for(Address address : addresses){
+                        options.addView(makeTextView(address));
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+
+                return false;
+            }
+        });
+    }
+
+    private TextView makeTextView(Address address){
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1);
+
+        TextView tv = new TextView(this);
+
+        tv.setText(address.getAddressLine(0));
+
+        tv.setGravity(Gravity.CENTER);
+        tv.setPadding(5, 5, 5, 5);
+        tv.setLayoutParams(params);
+
+        tv.setBackgroundColor(0xffffffff);
+        tv.setTextColor(0xff000000);
+
+        tv.setOnClickListener(view -> {
+            selected = address;
+
+            mMap.clear();
+
+            LatLng latLng = new LatLng(selected.getLatitude(), selected.getLongitude());
+
+            MarkerOptions marker = new MarkerOptions();
+            marker.position(latLng);
+            marker.rotation(20);
+            mMap.addMarker(marker);
+
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
+            mMap.animateCamera(cameraUpdate);
+
+            searchView.setQuery("", false);
+            searchView.clearFocus();
+        });
+
+        return tv;
     }
 }
