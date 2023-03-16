@@ -5,14 +5,22 @@ import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.FragmentActivity;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,9 +43,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ActivityMapsBinding binding;
 
     private SearchView searchView;
+    private Button selectBtn;
 
     private List<Address> addresses;
     private Address selected = null;
+
+    private String CHANNEL_ID = "WakeMeUpWhenIt'sAllOver";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +61,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        createNotificationChannel();
     }
 
     /**
@@ -124,6 +137,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return false;
             }
         });
+
+        selectBtn = findViewById(R.id.select_btn);
+
+        selectBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(v.getContext(), SetAlarmActivity.class);
+
+                intent.putExtra("address", selected.getAddressLine(0));
+                intent.putExtra("lat", selected.getLatitude());
+                intent.putExtra("lon", selected.getLongitude());
+
+                startActivity(intent);
+            }
+        });
     }
 
     private TextView makeTextView(Address address){
@@ -163,5 +191,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
         return tv;
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Example Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
     }
 }

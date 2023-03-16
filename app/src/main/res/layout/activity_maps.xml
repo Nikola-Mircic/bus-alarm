@@ -34,4 +34,15 @@
         map:layout_constraintEnd_toEndOf="@+id/addr_search"
         map:layout_constraintStart_toStartOf="@+id/addr_search"
         map:layout_constraintTop_toBottomOf="@+id/addr_search" />
+
+    <Button
+        android:id="@+id/select_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:padding="10dp"
+        android:text="Select"
+        map:layout_constraintBottom_toBottomOf="parent"
+        map:layout_constraintEnd_toEndOf="parent"
+        map:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
