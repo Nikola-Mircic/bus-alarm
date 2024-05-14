@@ -117,7 +117,10 @@ public class TrackingService extends Service {
                                 "Tracking service",
                                 "Lat: " + location.getLatitude() + ", long: " + location.getLongitude(),
                                 notificationIntent,
-                                165);
+                                1652);
+
+                        stopForeground(true);
+                        stopSelf();
                     }else{
                         Log.d("TrackingService", "Current distance: " + currentDistance);
                     }
