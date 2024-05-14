@@ -62,27 +62,27 @@ public class TrackingService extends Service {
         return null;
     }
 
+
+
     @SuppressLint("MissingPermission")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("TrackingService", "Started service");
         Toast.makeText(this, "Service started!", Toast.LENGTH_LONG).show();
 
-        Log.d("TrackingService", "Geting location...");
+        startForeground(165, getServiceNotification());
 
         int distance = intent.getIntExtra("minDistance", 5000);
-
         double lat = intent.getDoubleExtra("lat", 0);
         double lon = intent.getDoubleExtra("lon", 0);
 
         Location destination = new Location("Destination");
-
         destination.setLatitude(lat);
         destination.setLongitude(lon);
 
         getLocation(destination, distance);
 
-        return START_REDELIVER_INTENT;
+        return START_STICKY;
     }
 
     @SuppressLint("MissingPermission")
@@ -94,6 +94,7 @@ public class TrackingService extends Service {
                     .setGranularity(Granularity.GRANULARITY_FINE)
                     .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                     .setMinUpdateDistanceMeters(500)
+                    .setIntervalMillis(5000)
                     .build();
 
             LocationCallback locationCallback = new LocationCallback() {
@@ -140,6 +141,21 @@ public class TrackingService extends Service {
                 }
             });
         }
+    }
+
+    private Notification getServiceNotification(){
+        Intent intent = new Intent(this, MapsActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 165, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Bus alarm")
+                .setContentText("Taking care of you!")
+                .setAutoCancel(true)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setContentIntent(pendingIntent);
+
+        return notificationBuilder.build();
     }
 
     public void showNotification(Context context, String title, String message, Intent intent, int reqCode) {

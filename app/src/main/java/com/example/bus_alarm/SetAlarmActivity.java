@@ -78,7 +78,7 @@ public class SetAlarmActivity extends AppCompatActivity implements OnMapReadyCal
                                     service.putExtra("lat", lat);
                                     service.putExtra("lon", lon);
 
-                                    SetAlarmActivity.this.startService(service);
+                                    SetAlarmActivity.this.startForegroundService(service);
                                 }
 
                                 @Override
