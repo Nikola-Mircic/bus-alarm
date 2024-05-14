@@ -106,6 +106,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         options.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 options.removeAllViews();
             }
         });
@@ -143,6 +144,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         selectBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(selected == null){
+                    Toast.makeText(MapsActivity.this, "selected = null", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
                 Intent intent = new Intent(v.getContext(), SetAlarmActivity.class);
 
                 intent.putExtra("address", selected.getAddressLine(0));
@@ -173,6 +179,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         tv.setOnClickListener(view -> {
             selected = address;
+
+            Toast.makeText(MapsActivity.this, address.getAddressLine(0), Toast.LENGTH_LONG).show();
 
             mMap.clear();
 
