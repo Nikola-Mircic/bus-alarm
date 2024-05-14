@@ -86,6 +86,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 marker.rotation(20);
 
                 mMap.addMarker(marker);
+
+                Geocoder geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
+
+                try {
+                    selected = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1).get(0);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
