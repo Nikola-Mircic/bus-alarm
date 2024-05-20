@@ -2,11 +2,13 @@ package com.example.bus_alarm;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -65,30 +67,58 @@ public class SetAlarmActivity extends AppCompatActivity implements OnMapReadyCal
         startBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                    Dexter.withContext(SetAlarmActivity.this)
-                            .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                            .withListener(new PermissionListener(){
-                                @Override
-                                public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
-                                    Toast.makeText(SetAlarmActivity.this, "Pokrenut service", Toast.LENGTH_LONG).show();
+                String[] permissions;
 
-                                    Intent service = new Intent(SetAlarmActivity.this, TrackingService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.POST_NOTIFICATIONS};
+                }else{
+                    permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+                }
 
-                                    service.putExtra("minDistance", getMinDistance());
-                                    service.putExtra("lat", lat);
-                                    service.putExtra("lon", lon);
+                for(String permission : permissions) {
+                    if(!checkPermission(permission)){
+                        requestPermissions(permissions, 100);
+                        return;
+                    }
+                }
 
-                                    SetAlarmActivity.this.startForegroundService(service);
-                                }
-
-                                @Override
-                                public void onPermissionDenied(PermissionDeniedResponse permissionDeniedResponse) {}
-
-                                @Override
-                                public void onPermissionRationaleShouldBeShown(PermissionRequest permissionRequest, PermissionToken permissionToken) {}
-                            }).check();
+                startTrackingService();
             }
         });
+    }
+
+    private void startTrackingService(){
+        Toast.makeText(SetAlarmActivity.this, "Pokrenut service", Toast.LENGTH_LONG).show();
+
+        Intent service = new Intent(SetAlarmActivity.this, TrackingService.class);
+
+        service.putExtra("minDistance", getMinDistance());
+        service.putExtra("lat", lat);
+        service.putExtra("lon", lon);
+
+        service.addCategory(TrackingService.TAG);
+        SetAlarmActivity.this.startForegroundService(service);
+    }
+
+    private boolean checkPermission(String permission){
+        if(ActivityCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        for (int result : grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED)
+                return;
+        }
+
+        startTrackingService();
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override

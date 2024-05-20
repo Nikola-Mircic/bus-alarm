@@ -2,6 +2,7 @@ package com.example.bus_alarm.location;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -12,14 +13,24 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 
+import com.example.bus_alarm.AlarmActivity;
+import com.example.bus_alarm.PlayerService;
+import com.example.bus_alarm.SetAlarmActivity;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.Granularity;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+
+import android.media.AudioAttributes;
+import android.media.Ringtone;
 import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.provider.AlarmClock;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -43,16 +54,21 @@ import com.google.android.gms.tasks.Task;
 
 import java.security.Permission;
 import java.security.Permissions;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class TrackingService extends Service {
+    public static final String TAG = "TrackingService";
 
     private String CHANNEL_ID = "WakeMeUpWhenIt'sAllOver";
 
     private NotificationManager notificationManager;
 
     private FusedLocationProviderClient fusedLocationClient;
+    private LocationRequest locationRequest;
+    private LocationCallback locationCallback;
 
     private Timer timer = new Timer();
 
@@ -62,15 +78,11 @@ public class TrackingService extends Service {
         return null;
     }
 
-
-
     @SuppressLint("MissingPermission")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("TrackingService", "Started service");
         Toast.makeText(this, "Service started!", Toast.LENGTH_LONG).show();
-
-        startForeground(165, getServiceNotification());
 
         int distance = intent.getIntExtra("minDistance", 5000);
         double lat = intent.getDoubleExtra("lat", 0);
@@ -80,9 +92,13 @@ public class TrackingService extends Service {
         destination.setLatitude(lat);
         destination.setLongitude(lon);
 
+        createChannel();
+
+        startForeground(165, getServiceNotification());
+
         getLocation(destination, distance);
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @SuppressLint("MissingPermission")
@@ -90,14 +106,14 @@ public class TrackingService extends Service {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            LocationRequest locationRequest = new LocationRequest.Builder(5000)
+            locationRequest = new LocationRequest.Builder(15000)
                     .setGranularity(Granularity.GRANULARITY_FINE)
                     .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                     .setMinUpdateDistanceMeters(500)
-                    .setIntervalMillis(5000)
+                    .setIntervalMillis(15000)
                     .build();
 
-            LocationCallback locationCallback = new LocationCallback() {
+            locationCallback = new LocationCallback() {
                 @Override
                 public void onLocationResult(@NonNull LocationResult locationResult) {
                     super.onLocationResult(locationResult);
@@ -111,16 +127,19 @@ public class TrackingService extends Service {
 
                     if(currentDistance < distance){
                         Log.d("TrackingService", "Current distance: " + currentDistance);
-                        Intent notificationIntent = new Intent(TrackingService.this, MapsActivity.class);
 
+                        Intent playerIntent = new Intent(TrackingService.this, PlayerService.class);
+                        playerIntent.addCategory(PlayerService.TAG);
+                        startService(playerIntent);
+
+                        Intent stopIntent = new Intent(TrackingService.this, AlarmActivity.class);
                         showNotification(TrackingService.this,
-                                "Tracking service",
-                                "Lat: " + location.getLatitude() + ", long: " + location.getLongitude(),
-                                notificationIntent,
-                                1652);
+                                "Wake up!",
+                                "You arrived!",
+                                stopIntent,
+                                165);
 
-                        stopForeground(true);
-                        stopSelf();
+                        stopLocationUpdates();
                     }else{
                         Log.d("TrackingService", "Current distance: " + currentDistance);
                     }
@@ -146,6 +165,11 @@ public class TrackingService extends Service {
         }
     }
 
+    private void stopLocationUpdates(){
+        Log.d("TrackingService", "stopLocationUpdates: Location updates stoped");
+        fusedLocationClient.removeLocationUpdates(locationCallback);
+    }
+
     private Notification getServiceNotification(){
         Intent intent = new Intent(this, MapsActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 165, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
@@ -154,11 +178,23 @@ public class TrackingService extends Service {
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("Bus alarm")
                 .setContentText("Taking care of you!")
-                .setAutoCancel(true)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setContentIntent(pendingIntent);
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationManager.IMPORTANCE_HIGH);
+
 
         return notificationBuilder.build();
+    }
+
+    public void createChannel(){
+        notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+
+        NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, "Channel name", importance);
+        mChannel.setVibrationPattern(new long[]{1,0,1,0,1,1,1,0,0,1,1});
+
+        notificationManager.createNotificationChannel(mChannel);
     }
 
     public void showNotification(Context context, String title, String message, Intent intent, int reqCode) {
@@ -169,21 +205,18 @@ public class TrackingService extends Service {
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setAutoCancel(true)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setContentIntent(pendingIntent);
+                .addAction(R.drawable.alarm_off, "Ugasi alarm", pendingIntent)
+                .setPriority(NotificationManager.IMPORTANCE_HIGH);
 
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Channel Name";// The user-visible name of the channel.
-            int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
-            notificationManager.createNotificationChannel(mChannel);
-        }
-        notificationManager.notify(reqCode, notificationBuilder.build()); // 0 is the request code, it should be unique id
+        notificationManager.notify(reqCode, notificationBuilder.build());
 
         Log.d("showNotification", "showNotification: " + reqCode);
     }
 
+    @Override
+    public void onDestroy() {
+        Log.d("TrackingService", "onDestroy: TrackingService stopped!");
+        super.onDestroy();
+    }
 }
