@@ -6,6 +6,7 @@ import android.media.AudioAttributes;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -45,6 +46,10 @@ public class PlayerService extends Service {
                 .build();
 
         ringtone.setAudioAttributes(attributes);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ringtone.setLooping(true);
+        }
 
         ringtone.play();
 

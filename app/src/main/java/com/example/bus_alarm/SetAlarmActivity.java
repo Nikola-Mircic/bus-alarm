@@ -86,6 +86,14 @@ public class SetAlarmActivity extends AppCompatActivity implements OnMapReadyCal
                 startTrackingService();
             }
         });
+
+        Button cancelBtn = findViewById(R.id.cancelBtn);
+        cancelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopTrackingService();
+            }
+        });
     }
 
     private void startTrackingService(){
@@ -99,6 +107,19 @@ public class SetAlarmActivity extends AppCompatActivity implements OnMapReadyCal
 
         service.addCategory(TrackingService.TAG);
         SetAlarmActivity.this.startForegroundService(service);
+    }
+
+    private void stopTrackingService(){
+        Toast.makeText(SetAlarmActivity.this, "Zaustavljen service", Toast.LENGTH_LONG).show();
+
+        Intent service = new Intent(SetAlarmActivity.this, TrackingService.class);
+
+        service.putExtra("minDistance", getMinDistance());
+        service.putExtra("lat", lat);
+        service.putExtra("lon", lon);
+
+        service.addCategory(TrackingService.TAG);
+        SetAlarmActivity.this.stopService(service);
     }
 
     private boolean checkPermission(String permission){

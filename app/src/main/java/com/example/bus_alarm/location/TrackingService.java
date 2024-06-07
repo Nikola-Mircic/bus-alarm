@@ -110,7 +110,6 @@ public class TrackingService extends Service {
                     .setGranularity(Granularity.GRANULARITY_FINE)
                     .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                     .setMinUpdateDistanceMeters(500)
-                    .setIntervalMillis(15000)
                     .build();
 
             locationCallback = new LocationCallback() {
@@ -133,6 +132,10 @@ public class TrackingService extends Service {
                         startService(playerIntent);
 
                         Intent stopIntent = new Intent(TrackingService.this, AlarmActivity.class);
+
+                        stopIntent.putExtra("lat", destination.getLatitude());
+                        stopIntent.putExtra("lng", destination.getLongitude());
+
                         showNotification(TrackingService.this,
                                 "Wake up!",
                                 "You arrived!",
@@ -141,6 +144,9 @@ public class TrackingService extends Service {
 
                         stopLocationUpdates();
                     }else{
+                        float newDistanceUpdate = (float) currentDistance * 0.03f;
+
+
                         Log.d("TrackingService", "Current distance: " + currentDistance);
                     }
                 }
@@ -182,7 +188,6 @@ public class TrackingService extends Service {
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationManager.IMPORTANCE_HIGH);
 
-
         return notificationBuilder.build();
     }
 
@@ -217,6 +222,7 @@ public class TrackingService extends Service {
     @Override
     public void onDestroy() {
         Log.d("TrackingService", "onDestroy: TrackingService stopped!");
+        stopLocationUpdates();
         super.onDestroy();
     }
 }
