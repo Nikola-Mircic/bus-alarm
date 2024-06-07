@@ -133,6 +133,10 @@ public class TrackingService extends Service {
                         startService(playerIntent);
 
                         Intent stopIntent = new Intent(TrackingService.this, AlarmActivity.class);
+
+                        stopIntent.putExtra("lat", destination.getLatitude());
+                        stopIntent.putExtra("lng", destination.getLongitude());
+
                         showNotification(TrackingService.this,
                                 "Wake up!",
                                 "You arrived!",
