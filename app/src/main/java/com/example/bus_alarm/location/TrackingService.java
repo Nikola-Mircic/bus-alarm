@@ -70,8 +70,6 @@ public class TrackingService extends Service {
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
 
-    private Timer timer = new Timer();
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -191,7 +189,7 @@ public class TrackingService extends Service {
     }
 
     private Notification getServiceNotification(){
-        Intent intent = new Intent(this, MapsActivity.class);
+        Intent intent = new Intent(this, AlarmActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 165, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)

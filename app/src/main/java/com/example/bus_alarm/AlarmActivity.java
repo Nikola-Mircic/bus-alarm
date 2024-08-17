@@ -43,13 +43,6 @@ public class AlarmActivity extends AppCompatActivity implements OnMapReadyCallba
             return insets;
         });
 
-        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        manager.cancel(165);
-
-        Intent trackingIntent = new Intent(this, TrackingService.class);
-        trackingIntent.addCategory(TrackingService.TAG);
-        stopService(trackingIntent);
-
         Intent intent = getIntent();
 
         lat = intent.getDoubleExtra("lat", 0);
@@ -63,6 +56,13 @@ public class AlarmActivity extends AppCompatActivity implements OnMapReadyCallba
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                manager.cancel(165);
+
+                Intent trackingIntent = new Intent(AlarmActivity.this, TrackingService.class);
+                trackingIntent.addCategory(TrackingService.TAG);
+                stopService(trackingIntent);
+
                 Intent playerIntent = new Intent(AlarmActivity.this, PlayerService.class);
                 playerIntent.addCategory(PlayerService.TAG);
                 stopService(playerIntent);
