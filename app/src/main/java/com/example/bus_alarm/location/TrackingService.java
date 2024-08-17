@@ -70,8 +70,6 @@ public class TrackingService extends Service {
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
 
-    private Timer timer = new Timer();
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -144,31 +142,45 @@ public class TrackingService extends Service {
 
                         stopLocationUpdates();
                     }else{
-                        float newDistanceUpdate = (float) currentDistance * 0.03f;
+                        /*float newDistanceUpdate = (float) currentDistance * 0.03f;
 
+                        locationRequest = new LocationRequest.Builder(15000)
+                                .setGranularity(Granularity.GRANULARITY_FINE)
+                                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                                .setMinUpdateDistanceMeters(newDistanceUpdate)
+                                .build();
+
+                        requestLocationUpdates();*/
 
                         Log.d("TrackingService", "Current distance: " + currentDistance);
                     }
                 }
             };
 
-            LocationSettingsRequest locationSettingsRequest = new LocationSettingsRequest.Builder()
-                    .addLocationRequest(locationRequest)
-                    .build();
-
-            SettingsClient settingsClient = LocationServices.getSettingsClient(this);
-
-            settingsClient.checkLocationSettings(locationSettingsRequest).addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-                @Override
-                public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
-                    if(task.isSuccessful()){
-                        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
-                    }else{
-                        task.getException().printStackTrace();
-                    }
-                }
-            });
+            requestLocationUpdates();
         }
+    }
+
+    private void requestLocationUpdates(){
+        LocationSettingsRequest locationSettingsRequest = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest)
+                .build();
+
+        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
+
+        settingsClient.checkLocationSettings(locationSettingsRequest).addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @SuppressLint("MissingPermission")
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                if(task.isSuccessful()){
+                    fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
+                }else{
+                    task.getException().printStackTrace();
+                }
+            }
+        });
+
+        Log.d("TrackingService", "Updated location update request");
     }
 
     private void stopLocationUpdates(){
@@ -177,11 +189,11 @@ public class TrackingService extends Service {
     }
 
     private Notification getServiceNotification(){
-        Intent intent = new Intent(this, MapsActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 165, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+        Intent intent = new Intent(this, AlarmActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 165, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_twotone_alarm_24)
                 .setContentTitle("Bus alarm")
                 .setContentText("Taking care of you!")
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
@@ -207,7 +219,7 @@ public class TrackingService extends Service {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, reqCode, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_twotone_alarm_24)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
