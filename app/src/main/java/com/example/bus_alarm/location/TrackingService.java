@@ -144,31 +144,45 @@ public class TrackingService extends Service {
 
                         stopLocationUpdates();
                     }else{
-                        float newDistanceUpdate = (float) currentDistance * 0.03f;
+                        /*float newDistanceUpdate = (float) currentDistance * 0.03f;
 
+                        locationRequest = new LocationRequest.Builder(15000)
+                                .setGranularity(Granularity.GRANULARITY_FINE)
+                                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                                .setMinUpdateDistanceMeters(newDistanceUpdate)
+                                .build();
+
+                        requestLocationUpdates();*/
 
                         Log.d("TrackingService", "Current distance: " + currentDistance);
                     }
                 }
             };
 
-            LocationSettingsRequest locationSettingsRequest = new LocationSettingsRequest.Builder()
-                    .addLocationRequest(locationRequest)
-                    .build();
-
-            SettingsClient settingsClient = LocationServices.getSettingsClient(this);
-
-            settingsClient.checkLocationSettings(locationSettingsRequest).addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
-                @Override
-                public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
-                    if(task.isSuccessful()){
-                        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
-                    }else{
-                        task.getException().printStackTrace();
-                    }
-                }
-            });
+            requestLocationUpdates();
         }
+    }
+
+    private void requestLocationUpdates(){
+        LocationSettingsRequest locationSettingsRequest = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest)
+                .build();
+
+        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
+
+        settingsClient.checkLocationSettings(locationSettingsRequest).addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @SuppressLint("MissingPermission")
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                if(task.isSuccessful()){
+                    fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
+                }else{
+                    task.getException().printStackTrace();
+                }
+            }
+        });
+
+        Log.d("TrackingService", "Updated location update request");
     }
 
     private void stopLocationUpdates(){
