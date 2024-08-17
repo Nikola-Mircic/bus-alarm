@@ -21,11 +21,7 @@
         <activity
             android:name=".AlarmActivity"
             android:exported="false" />
-        <activity
-            android:name=".LaunchAlarmActivity"
-            android:exported="false"
-            android:label="@string/title_activity_launch_alarm"
-            android:theme="@style/Theme.Busalarm" />
+
         <activity
             android:name=".SetAlarmActivity"
             android:exported="false">
@@ -46,7 +42,7 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBtv_SMpaQ8BSC8RHVuMY4nC2au0vQIB7s" />
+            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name=".MapsActivity"
