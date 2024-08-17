@@ -48,6 +48,7 @@ public class AlarmActivity extends AppCompatActivity implements OnMapReadyCallba
         lat = intent.getDoubleExtra("lat", 0);
         lng = intent.getDoubleExtra("lng", 0);
 
+
         ((SupportMapFragment ) getSupportFragmentManager().findFragmentById(R.id.mapView)).getMapAsync(this);
 
 
